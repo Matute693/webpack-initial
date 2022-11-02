@@ -1,12 +1,15 @@
 const HtmlWebPack = require('html-webpack-plugin');
 const MiniCssExtract = require('mini-css-extract-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
+const CssMinimizer = require('css-minimizer-webpack-plugin')
+const Terser = require('terser-webpack-plugin');
 
 
 module.exports = {
-    mode: 'development',
+    mode: 'production',
     output: {
-        clean: true
+        clean: true,
+        filename: 'main.[contenthash].js'
     },
     // entry: './src/index.js',
     module: {
@@ -27,10 +30,31 @@ module.exports = {
             {
                 test: /\.(png|jpe?g|git)$/,
                 loader: 'file-loader'
-            }
+            },
+            {
+                // Me asegura de subir la ultima version de Javascript al navegador cuando estoy en ambiente productivo
+                test: /\.m?js$/,
+                exclude: /node_modules/,
+                use: {
+                  loader: "babel-loader",
+                  options: {
+                    presets: ['@babel/preset-env']
+                  }
+                }
+              }
         ]
     },
-    optimization: {},
+
+
+    optimization: {
+        // hago el minificado del codigo css dentro del dist/main.fullhash.css
+        minimize: true,
+        minimizer: [
+            new CssMinimizer(),
+            new Terser(),
+        ],
+    },
+    
     plugins: [
         new HtmlWebPack({
             title: 'Mi webpack app',
@@ -38,12 +62,12 @@ module.exports = {
             // template: './src/index.html'
         }),
         new MiniCssExtract({
-            filename: '[name].css',
+            filename: '[name].[fullhash].css',
             ignoreOrder: false
         }),
         new CopyPlugin({
             patterns: [
-                { from: 'src/assets/img', to: 'assets/'}
+                { from: 'src/assets/', to: 'assets/'}
             ]
         })
     ]
